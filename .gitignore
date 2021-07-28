@@ -1,32 +1,8 @@
-# Prerequisites
-*.d
+# Arduino Files:
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+# Credential Files:
+WifiCredentials.h
 
-# Precompiled Headers
-*.gch
-*.pch
+#MacOS Files:
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
+.DS_Store
