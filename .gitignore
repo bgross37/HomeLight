@@ -3,6 +3,9 @@
 # Credential Files:
 WifiCredentials.h
 
+# IDE Files:
+*.xcworkspace
+
 #MacOS Files:
 
 .DS_Store
