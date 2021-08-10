@@ -17,9 +17,7 @@
 
 #define DATA_PIN D4
 #define NUM_LEDS 143
-#define DEVICE_ID_0 0                 //Required to be 3 digits
-#define DEVICE_ID_1 0
-#define DEVICE_ID_2 1
+
 
 
 WebSocketsServer webSocket(81);    // create a websocket server on port 81
@@ -27,7 +25,6 @@ CRGBW leds[NUM_LEDS];
 CRGB *ledsRGB = (CRGB *) &leds[0];
 
 const char* mdnsName = "esp8266"; // Domain name for the mDNS responder
-const char id[] = {'$', DEVICE_ID_0, DEVICE_ID_1, DEVICE_ID_2};
 const int deviceType = 1;
 
 unsigned long lastReconnectMillis = 0;
@@ -39,12 +36,10 @@ const int numberOfSets = NUM_LEDS / setSize;
 
 char currentMode = '#';
 
-CHSV currentColor = CHSV(0,0,0);
-
-int hue = 0;
-int sat = 200;
-
-SoftPin w_pin(6, 500, false);
+CHSV currentColorHSV = CHSV(0,0,0);
+CRGBW tempRGBW = CRGBW(0,0,0,0);
+CRGB tempRGB = CRGB(0,0,0);
+int currentWhite = 0;
 
 
 void setup() {
@@ -75,6 +70,7 @@ void setup() {
   MDNS.begin(mdnsName);                        // start the multicast domain name server
   webSocket.begin();                          // start the websocket server
   webSocket.onEvent(webSocketEvent);          // if there's an incomming websocket message, go to function 'webSocketEvent' 
+  lastReconnectMillis = millis();
 }
 
 
@@ -90,8 +86,11 @@ void loop() {
   
   switch(currentMode){
     case '#':
+      tempRGB = CRGB(0,0,0);
+      hsv2rgb_rainbow(currentColorHSV, tempRGB);
+      tempRGBW = CRGBW(tempRGB.r, tempRGB.g, tempRGB.b, currentWhite);
       for(int i = 0; i < NUM_LEDS; i++){
-        leds[i] = currentColor;
+        leds[i] = tempRGBW;
       }
       break;
 
@@ -126,7 +125,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t messag
       }
       break;
     case WStype_TEXT:
-      if(messageLength < 2){
+      if(messageLength < 1){
         Serial.println("Incomplete Message:");
         Serial.printf("[%u] get Text: %s\n", num, payload);
         return;
@@ -134,20 +133,48 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t messag
       Serial.printf("[%u] get Text: %s\n", num, payload);
       
       if (payload[0] == '#') {
-        uint32_t hsv = (uint32_t) strtol((const char *) &payload[1], NULL, 16);   // decode rgb data
-        int h = ((hsv >> 16) & 0xFF);
-        int s = ((hsv >>  8) & 0xFF);
-        int v =          hsv & 0xFF;
-        currentColor = CHSV(h,s,v);
+        uint32_t hsv = (uint32_t) strtoul((const char *) &payload[1], NULL, 16);   // decode rgb data
+        int h = ((hsv >> 24) & 0xFF);
+        int s = ((hsv >> 16) & 0xFF);
+        int v = ((hsv >>  8) & 0xFF);
+        int w =          hsv & 0xFF;
+        Serial.print("White: ");
+        Serial.print(w);
+        Serial.println("");
+        Serial.print("Hue: ");
+        Serial.print(h);
+        Serial.println("");
+        Serial.print("Sat: ");
+        Serial.print(s);
+        Serial.println("");
+        Serial.print("Val: ");
+        Serial.print(v);
+        Serial.println("");
+        currentColorHSV = CHSV(h, s, v);
+        currentWhite = w;
       } 
       
       else if (payload[0] == '$') {
-        String hsv = String(String(currentColor.hue, HEX) + String(currentColor.saturation, HEX));
-        hsv += String(currentColor.value, HEX);
         String response = "R";
         response += deviceType;
         response += String(currentMode);
-        response += hsv;
+        if(currentColorHSV.hue < 0x0F){
+          response += "0";
+        }
+        response += String(currentColorHSV.hue, HEX);
+        if(currentColorHSV.sat < 0x0F){
+          response += "0";
+        }
+        response += String(currentColorHSV.sat, HEX);
+        if(currentColorHSV.val < 0x0F){
+          response += "0";
+        }
+        response += String(currentColorHSV.val, HEX);
+        if(currentWhite < 0x0F){
+          response += "0";
+        }
+        response += String(currentWhite, HEX);
+        Serial.println(response);
         webSocket.sendTXT(num, response);
       } 
       
@@ -160,7 +187,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t messag
         int h = ((hsv >> 16) & 0xFF);
         int s = ((hsv >>  8) & 0xFF);
         int v =          hsv & 0xFF;
-        currentColor = CHSV(h,s,v);
+        currentColorHSV = CHSV(h,s,v);
         currentMode = 'B';
       }
       
@@ -182,7 +209,7 @@ void renderWave(float offset){
       if(i * setSize + ii <= NUM_LEDS){
         float ledValueMod = ii + (setSize * offset);
         uint8_t pos = ledValueMod * (256 / setSize);
-        leds[i * setSize + ii - 1] = CHSV(currentColor.hue, currentColor.saturation, levelCalculationWave(pos));
+        leds[i * setSize + ii - 1] = CHSV(currentColorHSV.hue, currentColorHSV.saturation, levelCalculationWave(pos));
       }
     }
   }  
