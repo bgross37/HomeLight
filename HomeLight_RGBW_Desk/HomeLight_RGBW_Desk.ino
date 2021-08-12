@@ -8,14 +8,12 @@
 #include                              <ESP8266WiFi.h>
 #include                              <ESP8266mDNS.h>
 #include                              <WebSocketsServer.h>
-#include                              <SoftPin.h>
-#include                              <SoftLight.h>
 #include                              "WifiCredentials.h"
 #include                              <FastLED.h>
 #include                              "FastLED_RGBW.h"
 
 
-#define DATA_PIN D4
+#define DATA_PIN D3
 #define NUM_LEDS 143
 
 
@@ -24,7 +22,7 @@ WebSocketsServer webSocket(81);    // create a websocket server on port 81
 CRGBW leds[NUM_LEDS];
 CRGB *ledsRGB = (CRGB *) &leds[0];
 
-const char* mdnsName = "esp8266"; // Domain name for the mDNS responder
+const char* mdnsName = "desk"; // Domain name for the mDNS responder
 const int deviceType = 1;
 
 unsigned long lastReconnectMillis = 0;
@@ -43,6 +41,8 @@ int currentWhite = 0;
 
 
 void setup() {
+  pinMode(D4, OUTPUT);
+  digitalWrite(D4, HIGH);
   Serial.begin(115200);
 
    //---- pixel config and initializing to black:
@@ -82,7 +82,7 @@ void loop() {
     WiFi.reconnect();
   }
   webSocket.loop();
-
+  MDNS.update();
   
   switch(currentMode){
     case '#':
@@ -106,7 +106,7 @@ void loop() {
   }
   
 
-  if(millis() - lastFrameMillis > 50){
+  if(millis() - lastFrameMillis > 30){
     lastFrameMillis = millis();
     FastLED.show();
   }
@@ -133,23 +133,12 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t messag
       Serial.printf("[%u] get Text: %s\n", num, payload);
       
       if (payload[0] == '#') {
+        currentMode = '#';
         uint32_t hsv = (uint32_t) strtoul((const char *) &payload[1], NULL, 16);   // decode rgb data
         int h = ((hsv >> 24) & 0xFF);
         int s = ((hsv >> 16) & 0xFF);
         int v = ((hsv >>  8) & 0xFF);
         int w =          hsv & 0xFF;
-        Serial.print("White: ");
-        Serial.print(w);
-        Serial.println("");
-        Serial.print("Hue: ");
-        Serial.print(h);
-        Serial.println("");
-        Serial.print("Sat: ");
-        Serial.print(s);
-        Serial.println("");
-        Serial.print("Val: ");
-        Serial.print(v);
-        Serial.println("");
         currentColorHSV = CHSV(h, s, v);
         currentWhite = w;
       } 
@@ -184,9 +173,10 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t messag
 
       else if (payload[0] == 'B') {
         uint32_t hsv = (uint32_t) strtol((const char *) &payload[1], NULL, 16);   // decode rgb data
-        int h = ((hsv >> 16) & 0xFF);
-        int s = ((hsv >>  8) & 0xFF);
-        int v =          hsv & 0xFF;
+        int h = ((hsv >> 24) & 0xFF);
+        int s = ((hsv >> 16) & 0xFF);
+        int v = ((hsv >>  8) & 0xFF);
+        int w =          hsv & 0xFF;
         currentColorHSV = CHSV(h,s,v);
         currentMode = 'B';
       }
@@ -212,7 +202,8 @@ void renderWave(float offset){
         leds[i * setSize + ii - 1] = CHSV(currentColorHSV.hue, currentColorHSV.saturation, levelCalculationWave(pos));
       }
     }
-  }  
+  }
+  leds[0] = CRGB::Black;  
 }
 
 
