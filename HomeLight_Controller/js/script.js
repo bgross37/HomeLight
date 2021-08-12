@@ -6,14 +6,12 @@ class Device {
     websocket = undefined;
     sliderConfig = undefined;
     
-    constructor(address, devicetype, mode, values, websocket, name, icon, sliderConfig){
+    constructor(address, devicetype, mode, values, websocket, sliderConfig){
         this.address = address
         this.devicetype = devicetype
         this.mode = mode
         this.values = values
         this.websocket = websocket
-        this.name = name
-        this.icon = icon
         this.sliderConfig = sliderConfig
     }
     
@@ -46,9 +44,8 @@ class Device {
 // ----- INITIALIZATION STEPS
 const DEVICETYPES = readXML('DeviceTypes.xml').devicetypes.device
 let DEVICES = readXML('Devices.xml').devices.device;
-let htmlBuildCompleted = false;
+let deviceContainers = [];
 let websockets = [];
-//let deviceObjects = [];
 let errorcount = 0;
 
 //xml parser returns just an object of only one tag is found. Needs to be an array all the time.
@@ -61,6 +58,7 @@ Object.entries(DEVICES).forEach(([key, device]) => {
     let ws = new WebSocket("ws://" + device._mdns + ":81")
     ws.addEventListener('open', function (event) {
         ws.send('$'); //request current status
+        buildHTML(device);
         //TODO: create the header here
     });
     ws.addEventListener('error', function(event){
@@ -79,10 +77,11 @@ Object.entries(DEVICES).forEach(([key, device]) => {
             device.isError = false;
         }
         let response = parseResponseString(event.data);
-        let deviceConfig = DEVICETYPES[response.devicetype].mode.find(x => x._id === response.mode).control
-        let newDevice = new Device(device._mdns, response.devicetype, response.mode, response.values, ws, device._name, device._icon, deviceConfig);
+        let deviceSliderConfig = DEVICETYPES[response.devicetype].mode.find(x => x._id === response.mode).control
+        let newDevice = new Device(device._mdns, response.devicetype, response.mode, response.values, ws, deviceSliderConfig);
         websockets.push(ws);
-        buildHTML(newDevice);
+        
+        createControls(newDevice);
         //TODO: only build the controls here
     });
 })
@@ -91,31 +90,36 @@ Object.entries(DEVICES).forEach(([key, device]) => {
 
 //build the HTML. This is called after all devices have been created and received their statuses.
 function buildHTML(device){
-        let lightBox = document.createElement('div');
-        lightBox.classList.add('lightBox');
-        
-        let lightIcon = document.createElement('img');
-        lightIcon.classList.add('lightIcon');
-        lightIcon.src = device.icon;
-        
-        let lightTitle = document.createElement('h4');
-        lightTitle.classList.add('lightTitle');
-        lightTitle.innerHTML = device.name;
-        
-        let colorBox = document.createElement('div');
-        colorBox.classList.add('colorBox')
-        
-        let lightControlContainer = document.createElement('div');
-        lightControlContainer.classList.add('lightControlContainer');
-        lightControlContainer.classList.add('row2');
-        lightControlContainer.appendChild(createHSVSliders(colorBox, device.receiveColors.bind(device), device.values, device.sliderConfig));
-        
-        lightBox.appendChild(lightIcon);
-        lightBox.appendChild(lightTitle);
-        lightBox.appendChild(colorBox);
-        lightBox.appendChild(lightControlContainer);
-        
-        document.getElementById('lightsContainer').appendChild(lightBox);
+    let lightBox = document.createElement('div');
+    lightBox.classList.add('lightBox');
+    
+    let lightIcon = document.createElement('img');
+    lightIcon.classList.add('lightIcon');
+    lightIcon.src = device._icon;
+    
+    let lightTitle = document.createElement('h4');
+    lightTitle.classList.add('lightTitle');
+    lightTitle.innerHTML = device._name;
+    
+    let colorBox = document.createElement('div');
+    colorBox.classList.add('colorBox')
+    colorBox.id = "colorBox_" + device._mdns;
+    
+    let lightControlContainer = document.createElement('div');
+    lightControlContainer.classList.add('lightControlContainer');
+    lightControlContainer.classList.add('row2');
+    lightControlContainer.id = 'controlContainer_' + device._mdns;
+    
+    lightBox.appendChild(lightIcon);
+    lightBox.appendChild(lightTitle);
+    lightBox.appendChild(colorBox);
+    lightBox.appendChild(lightControlContainer);
+    
+    document.getElementById('lightsContainer').appendChild(lightBox);
+}
+
+function createControls(device){
+    document.getElementById('controlContainer_' + device.address).appendChild(createHSVSliders(document.getElementById('colorBox_' + device.address), device.receiveColors.bind(device), device.values, device.sliderConfig));
 }
 
 //building an error header
@@ -202,13 +206,18 @@ function createHSVSliders(colorBox, callback, values, config){
     
     
     hue.oninput = function(){
-        sat.style.background = "linear-gradient(to right, rgb(199, 199, 199) 0%, hsl(" + (hue.value * 1.41) + ", 100%, 50%) 100%)";
-        val.style.background = "linear-gradient(to right, #000000 0%, hsl(" + (hue.value * 1.41) + ", " + (sat.value / 2.55) + "%, 50%) 100%)";
+        sat.style.background = "-webkit-gradient(linear, left top, right top, from(rgb(199, 199, 199) to(hsl(" + (hue.value * 1.41) + ", 100%, 50%)))";
+        //sat.style.background = "linear-gradient(to right, rgb(199, 199, 199) 0%, hsl(" + (hue.value * 1.41) + ", 100%, 50%) 100%)";
+        
+        val.style.background = "-webkit-gradient(linear, left top, right top, from(#000000) to(hsl(" + (hue.value * 1.41) + ", " + (sat.value / 2.55) + "%, 50%)))";
+        //val.style.background = "linear-gradient(to right, #000000 0%, hsl(" + (hue.value * 1.41) + ", " + (sat.value / 2.55) + "%, 50%) 100%)";
+
         colorBox.style.backgroundColor = calculatePreviewColor(hue.value, sat.value, val.value);
         callback(hue.value, sat.value, val.value, white.value);
     }
     sat.oninput = function(){
-        val.style.background = "linear-gradient(to right, #000000 0%, hsl(" + (hue.value * 1.41) + ", " + (sat.value / 2.55) + "%, 50%) 100%)";
+        val.style.background = "-webkit-gradient(linear, left top, right top, from(#000000) to(hsl(" + (hue.value * 1.41) + ", " + (sat.value / 2.55) + "%, 50%)))";
+        //val.style.background = "linear-gradient(to right, #000000 0%, hsl(" + (hue.value * 1.41) + ", " + (sat.value / 2.55) + "%, 50%) 100%)";
         colorBox.style.backgroundColor = calculatePreviewColor(hue.value, sat.value, val.value);
         callback(hue.value, sat.value, val.value, white.value);
     }
