@@ -1,0 +1,6 @@
+<devices>
+    <device name='Desk' mdns='desk.local' icon='assets/desk.png'>
+    </device>
+    <device name='Mirror' mdns='mirror.local' icon='assets/mirror.png'>
+    </device>
+</devices>

@@ -1,31 +1,32 @@
 <devicetypes>
-    <!--
-    device ID is the device type (global)
-    Each device can have up to 27 modes (A-Z + #).
-    Each mode defines its ID (transmitted to the device) and its controls as child notes of type <control>.
-    Each control needs to specifya type and a rank, indicating where in the string it needs to be placed.
-    Sliders must define a min and max.
-    !-->
+    <device id='0'>
+    </device>
     <device id="1">
         <mode id="#" name="Static Color">
-            <control type="slider" min="0" max="255" rank="0">Hue</control>
-            <control type="slider" min="0" max="255" rank="1">Saturation</control>
-            <control type="slider" min="0" max="255" rank="2">Value</control>
+            <control type="H" active='true'></control>
+            <control type="S" active='true'></control>
+            <control type="V" active='true'></control>
+            <control type="W" active='true'></control>
         </mode>
         <mode id="A" name="Unclear">
-            <control type="slider" min="0" max="255" rank="0">Stuff</control>
+            <control type="H" active='true'></control>
+            <control type="S" active='true'></control>
+            <control type="V" active='true'></control>
+            <control type="W" active='true'></control>
         </mode>
         <mode id="B" name="Breathe">
-            <control type="slider" min="0" max="255" rank="0">Hue</control>
-            <control type="slider" min="0" max="255" rank="1">Saturation</control>
-            <control type="slider" min="0" max="255" rank="2">Value</control>
+            <control type="H" active='true'></control>
+            <control type="S" active='true'></control>
+            <control type="V" active='false' inactiveValue='255'></control>
+            <control type="W" active='true'></control>
         </mode>
     </device>
     <device id="2">
         <mode id="#" name="Static Color">
-            <control type="slider" min="0" max="255" rank="0">Hue</control>
-            <control type="slider" min="0" max="255" rank="1">Saturation</control>
-            <control type="slider" min="0" max="255" rank="2">Value</control>
+            <control type="H" active='false'></control>
+            <control type="S" active='false'></control>
+            <control type="V" active='true'></control>
+            <control type="W" active='false'></control>
         </mode>
     </device>
     <device id="3">
@@ -34,3 +35,4 @@
         </mode>
     </device>
 </devicetypes>
+
