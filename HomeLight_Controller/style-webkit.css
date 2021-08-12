@@ -1,0 +1,202 @@
+/*
+ --------- MAIN STYLES ---------
+ */
+
+body{
+    background-color: #333333;
+    color: white;
+    font-family: sans-serif;
+}
+
+#title{
+    text-align: center;
+    font-size: 6em;
+    padding-top: 48px;
+}
+
+
+/*
+ --------- LIGHT BOX ---------
+ */
+
+/* Overall container - estabilishing grid */
+.lightBox{
+    border: 1px solid white;
+    margin: 18px 18px 18px 18px;
+    display: -ms-grid;
+    display: grid;
+    -ms-grid-columns: [iconBox] 96px [titleBox] auto [colorBox] 216px [end];
+    grid-template-columns: [iconBox] 96px [titleBox] auto [colorBox] 216px [end];
+    -ms-grid-rows: [row1] 120px (auto)[2];
+    grid-template-rows: [row1] 120px repeat(2, auto);
+    justify-items: start;
+}
+
+/* Icon for each light */
+.lightIcon{
+    grid-column: iconBox;
+    grid-row: row1;
+    -ms-grid-row-align: center;
+    -ms-grid-column-align: center;
+    place-self: center;
+    width: 72px;
+}
+
+/* Title for each light */
+.lightTitle{
+    font-size: 4em;
+    padding: 12px;
+    margin: 18px;
+    -ms-grid-row-align: center;
+        align-self: center;
+    grid-column: titleBox;
+    grid-row: row1;
+}
+.errorTitle{
+    color: #444
+}
+/* Color display */
+.colorBox{
+    width: 192px;
+    height: 96px;
+    grid-column: colorBox;
+    grid-row: row1;
+    -ms-grid-row-align: center;
+    -ms-grid-column-align: center;
+    place-self: center;
+    border-radius: 96px;
+    border: 1px solid white;
+}
+
+/* Modular stuff */
+
+.lightControlContainer{
+    grid-column: titleBox / -1;
+    -ms-grid-row-align: center;
+    -ms-grid-column-align: center;
+    place-self: center;
+    overflow: hidden;
+    width: 90%;
+}
+
+/* Container for each slider */
+.sliderContainer{
+    /*grid-column: titleBox / -1;
+    place-self: center; */
+    overflow: hidden;
+    height: 96px;
+    width: 90%;
+}
+
+/* Common slider styles */
+.slider{
+    margin-top: 36px;
+    margin-bottom: 36px;
+    height: 24px;
+    width: 100%;
+    -webkit-appearance: none;
+       -moz-appearance: none;
+            appearance: none;
+    width: 100%; /* Full-width */
+    background: #aaa; /* Grey background */
+    outline: none; /* Remove outline */
+    border-radius: 24px;
+}
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none; /* Override default look */
+  appearance: none;
+  width: 25px; /* Set a specific slider handle width */
+  height: 25px; /* Slider handle height */
+  background: #fff; /* Green background */
+  cursor: pointer; /* Cursor on hover */
+  border-radius: 24px;
+}
+
+/* Special slider backgrounds */
+.slider-hue {
+  background: -webkit-gradient(linear, left top, right top, from(hsl(0,54%,51%)),color-stop(4%, hsl(14.4,54%,51%)),color-stop(8%, hsl(28.8,54%,51%)),color-stop(12%, hsl(43.2,54%,51%)),color-stop(16%, hsl(57.6,54%,51%)),color-stop(20%, hsl(72,54%,51%)),color-stop(24%, hsl(86.4,54%,51%)),color-stop(28%, hsl(100.8,54%,51%)),color-stop(32%, hsl(115.2,54%,51%)),color-stop(36%, hsl(129.6,54%,51%)),color-stop(40%, hsl(144,54%,51%)),color-stop(44%, hsl(158.4,54%,51%)),color-stop(48%, hsl(172.8,54%,51%)),color-stop(52%, hsl(187.2,54%,51%)),color-stop(56%, hsl(201.6,54%,51%)),color-stop(60%, hsl(216,54%,51%)),color-stop(64%, hsl(230.4,54%,51%)),color-stop(68%, hsl(244.8,54%,51%)),color-stop(72%, hsl(259.2,54%,51%)),color-stop(76%, hsl(273.6,54%,51%)),color-stop(80%, hsl(288,54%,51%)),color-stop(84%, hsl(302.4,54%,51%)),color-stop(88%, hsl(316.8,54%,51%)),color-stop(92%, hsl(331.2,54%,51%)),color-stop(96%, hsl(345.6,54%,51%)),to(hsl(360,54%,51%)));
+  background: -o-linear-gradient(left, hsl(0,54%,51%) 0%,hsl(14.4,54%,51%) 4%,hsl(28.8,54%,51%) 8%,hsl(43.2,54%,51%) 12%,hsl(57.6,54%,51%) 16%,hsl(72,54%,51%) 20%,hsl(86.4,54%,51%) 24%,hsl(100.8,54%,51%) 28%,hsl(115.2,54%,51%) 32%,hsl(129.6,54%,51%) 36%,hsl(144,54%,51%) 40%,hsl(158.4,54%,51%) 44%,hsl(172.8,54%,51%) 48%,hsl(187.2,54%,51%) 52%,hsl(201.6,54%,51%) 56%,hsl(216,54%,51%) 60%,hsl(230.4,54%,51%) 64%,hsl(244.8,54%,51%) 68%,hsl(259.2,54%,51%) 72%,hsl(273.6,54%,51%) 76%,hsl(288,54%,51%) 80%,hsl(302.4,54%,51%) 84%,hsl(316.8,54%,51%) 88%,hsl(331.2,54%,51%) 92%,hsl(345.6,54%,51%) 96%,hsl(360,54%,51%) 100%);
+  background: linear-gradient(to right, hsl(0,54%,51%) 0%,hsl(14.4,54%,51%) 4%,hsl(28.8,54%,51%) 8%,hsl(43.2,54%,51%) 12%,hsl(57.6,54%,51%) 16%,hsl(72,54%,51%) 20%,hsl(86.4,54%,51%) 24%,hsl(100.8,54%,51%) 28%,hsl(115.2,54%,51%) 32%,hsl(129.6,54%,51%) 36%,hsl(144,54%,51%) 40%,hsl(158.4,54%,51%) 44%,hsl(172.8,54%,51%) 48%,hsl(187.2,54%,51%) 52%,hsl(201.6,54%,51%) 56%,hsl(216,54%,51%) 60%,hsl(230.4,54%,51%) 64%,hsl(244.8,54%,51%) 68%,hsl(259.2,54%,51%) 72%,hsl(273.6,54%,51%) 76%,hsl(288,54%,51%) 80%,hsl(302.4,54%,51%) 84%,hsl(316.8,54%,51%) 88%,hsl(331.2,54%,51%) 92%,hsl(345.6,54%,51%) 96%,hsl(360,54%,51%) 100%);
+}
+
+.slider-white{
+    background: -webkit-gradient(linear, left top, right top, from(#000000), to(#FFFFCC));
+    background: -o-linear-gradient(left, #000000 0%, #FFFFCC 100%);
+    background: linear-gradient(to right, #000000 0%, #FFFFCC 100%);
+}
+
+
+
+/* Row attachements */
+.row2{
+    -ms-grid-row: 2;
+    grid-row: 2;
+}
+
+.row3{
+    -ms-grid-row: 3;
+    grid-row: 3;
+}
+
+.row4{
+    -ms-grid-row: 4;
+    grid-row: 4;
+}
+
+.row5{
+    -ms-grid-row: 5;
+    grid-row: 5;
+}
+
+
+
+
+
+
+/*
+ --------- ANIMATIONS ---------
+ */
+
+
+/* This is the collapse and expand routine for the side panels */
+.shown{
+  -webkit-animation: KEYshowControl 0.3s ease-in-out 0s 1 both;
+          animation: KEYshowControl 0.3s ease-in-out 0s 1 both;
+}
+.hidden{
+  -webkit-animation: KEYhideControl 0.3s ease-in-out 0s 1 both;
+          animation: KEYhideControl 0.3s ease-in-out 0s 1 both;
+}
+@-webkit-keyframes KEYshowControl {
+  from{
+    height: 0px;
+  }
+  to{
+    height: auto;
+  }
+}
+@keyframes KEYshowControl {
+  from{
+    height: 0px;
+  }
+  to{
+    height: auto;
+  }
+}
+@-webkit-keyframes KEYhideControl {
+  from{
+    height: auto;
+  }
+  to{
+      height: 0px;
+  }
+}
+@keyframes KEYhideControl {
+  from{
+    height: auto;
+  }
+  to{
+      height: 0px;
+  }
+}
+/*---------------------------*/
