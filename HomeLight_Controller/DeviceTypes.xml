@@ -23,16 +23,12 @@
     </device>
     <device id="2">
         <mode id="#" name="Static Color">
-            <control type="H" active='false'></control>
-            <control type="S" active='false'></control>
+            <control type="H" active='false' inactiveValue='0'></control>
+            <control type="S" active='false' inactiveValue='0'></control>
             <control type="V" active='true'></control>
-            <control type="W" active='false'></control>
+            <control type="W" active='false' inactiveValue='0'></control>
         </mode>
-    </device>
-    <device id="3">
-        <mode id="#" name="Static Brightness">
-            <control type="slider" min="0" max="255" rank="0">Brightness</control>
-        </mode>
+        <mode id='padding'></mode>
     </device>
 </devicetypes>
 
