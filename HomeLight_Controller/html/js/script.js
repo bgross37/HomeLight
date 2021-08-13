@@ -1,18 +1,12 @@
-class Device {
-    address = 0;
-    devicetype = 0;
+class DeviceState {
     mode = '#';
     values = [0, 0, 0, 0];
-    websocket = undefined;
-    sliderConfig = undefined;
+    ws = undefined;
     
-    constructor(address, devicetype, mode, values, websocket, sliderConfig){
-        this.address = address
-        this.devicetype = devicetype
+    constructor(mode, values, ws){
         this.mode = mode
         this.values = values
-        this.websocket = websocket
-        this.sliderConfig = sliderConfig
+        this.ws = ws;
     }
     
     receiveColors(hue, sat, val, white){
@@ -34,7 +28,7 @@ class Device {
                 message += this.values[i].toString(16)
             }
         }
-        this.websocket.send(message);
+        this.ws.send(message);
     }
 
 }
@@ -44,9 +38,9 @@ class Device {
 // ----- INITIALIZATION STEPS
 const DEVICETYPES = readXML('DeviceTypes.xml').devicetypes.device
 let DEVICES = readXML('Devices.xml').devices.device;
-let deviceContainers = [];
-let websockets = [];
 let errorcount = 0;
+
+let mainButton = document.getElementById('mainButton');
 
 //xml parser returns just an object of only one tag is found. Needs to be an array all the time.
 if(!Array.isArray(DEVICES)){
@@ -59,14 +53,17 @@ Object.entries(DEVICES).forEach(([key, device]) => {
     ws.addEventListener('open', function (event) {
         ws.send('$'); //request current status
         buildHTML(device);
-        //TODO: create the header here
     });
+    
     ws.addEventListener('error', function(event){
         errorcount++;
         device.isError = true;
         buildError(device);
-        //TODO: Modify box to say error
+        if(key == DEVICES.length - errorcount - 1){
+            activateMainButton();
+        }
     });
+    
     ws.addEventListener('message', function (event) {
         //the first response will have the current status - this will be used to create the object
         if(!event.data.startsWith('R')){
@@ -77,15 +74,36 @@ Object.entries(DEVICES).forEach(([key, device]) => {
             device.isError = false;
         }
         let response = parseResponseString(event.data);
-        let deviceSliderConfig = DEVICETYPES[response.devicetype].mode.find(x => x._id === response.mode).control
-        let newDevice = new Device(device._mdns, response.devicetype, response.mode, response.values, ws, deviceSliderConfig);
-        websockets.push(ws);
+        device.deviceType = response.deviceType;
+        device.sliderConfig = DEVICETYPES[response.devicetype].mode.find(x => x._id === response.mode).control
+        device.state = new DeviceState(response.mode, response.values, ws);
         
-        createControls(newDevice);
-        //TODO: only build the controls here
+        createControls(device);
+        
+        if(key == DEVICES.length - errorcount - 1){
+            activateMainButton();
+        }
     });
+    
 })
 
+
+
+function activateMainButton(){
+    //TODO: make main switch available
+}
+
+function mainButtonClicked(){
+    let value = mainButton.checked == true ? 255 : 0;
+    Object.entries(DEVICES).forEach(([key, device]) => {
+        if(!device.isError){
+            device.state.receiveColors(device.state.values[0], device.state.values[1], value, value);
+        }
+    })
+    
+    //TODO: register sliders with device so they can be reset
+}
+mainButton.onclick = mainButtonClicked;
 
 
 //build the HTML. This is called after all devices have been created and received their statuses.
@@ -119,12 +137,13 @@ function buildHTML(device){
 }
 
 function createControls(device){
-    document.getElementById('controlContainer_' + device.address).appendChild(createHSVSliders(document.getElementById('colorBox_' + device.address), device.receiveColors.bind(device), device.values, device.sliderConfig));
+    document.getElementById('controlContainer_' + device._mdns).appendChild(createHSVSliders(document.getElementById('colorBox_' + device._mdns), device.state.receiveColors.bind(device.state), device.state.values, device.sliderConfig));
 }
 
 //building an error header
 function buildError(device){
     if(device.isError){
+        console.log("Error on this device: ")
         console.log(device)
         
         let lightBox = document.createElement('div');
@@ -149,8 +168,8 @@ function buildError(device){
 
 //close websockets when unloading
 window.onbeforeunload = function(){
-    websockets.forEach(function(ws){
-        ws.close();
+    Object.entries(DEVICES).forEach(([key, device]) => {
+        device.state.ws.close();
     })
 }
 
@@ -178,6 +197,8 @@ function createHSVSliders(colorBox, callback, values, config){
     let sat = document.createElement('input');
     let val = document.createElement('input');
     let white = document.createElement('input');
+    
+    console.log(values)
 
     hue.type = 'range';
     hue.min = '0';
