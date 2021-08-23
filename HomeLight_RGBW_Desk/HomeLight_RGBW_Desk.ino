@@ -84,27 +84,26 @@ void loop() {
   webSocket.loop();
   MDNS.update();
   
-  switch(currentMode){
-    case '#':
+  if(currentMode == '#'){
       tempRGB = CRGB(0,0,0);
       hsv2rgb_rainbow(currentColorHSV, tempRGB);
       tempRGBW = CRGBW(tempRGB.r, tempRGB.g, tempRGB.b, currentWhite);
       for(int i = 0; i < NUM_LEDS; i++){
         leds[i] = tempRGBW;
       }
-      break;
-
-    case 'A':
-      break;
-
-    case 'B':
-      int frame = millis() % maxFrames;
+  }
+  else if(currentMode == 'A'){
+  int frame = millis() % maxFrames;
+      float offset = (float)frame / (float)maxFrames;
+      //direction modifier (-1): offset * 1 OR offset * -1
+      renderWaveFlag(offset * -1);
+  }
+  else if(currentMode == 'B'){
+    int frame = millis() % maxFrames;
       float offset = (float)frame / (float)maxFrames;
       //direction modifier (-1): offset * 1 OR offset * -1
       renderWave(offset * -1);
-      break;
-  }
-  
+  }  
 
   if(millis() - lastFrameMillis > 30){
     lastFrameMillis = millis();
@@ -168,7 +167,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t messag
       } 
       
       else if (payload[0] == 'A') {
-
+        currentMode = 'A';
       }
 
       else if (payload[0] == 'B') {
@@ -206,6 +205,37 @@ void renderWave(float offset){
   leds[0] = CRGB::Black;  
 }
 
+/**
+ * renders Wave LED strip. Iterates every set of LEDs, and LED per set.
+ * float offset: 0-0.999... offset of period
+ */
+void renderWaveFlag(float offset){
+  for(int i = 0; i <= numberOfSets; i++){
+    for (int ii = 1; ii <= setSize; ii++){
+      if(i * setSize + ii <= NUM_LEDS){
+        float ledValueMod = ii + (setSize * offset);
+        uint8_t pos = ledValueMod * (256 / setSize);
+        
+        if(i * setSize + ii - 1 < 35){
+          if((i * setSize + ii - 1) % 3 == 0){
+            leds[i * setSize + ii - 1] = CHSV(160, 255, levelCalculationWave(pos));
+          }
+          else {
+            leds[i * setSize + ii - 1] = CHSV(160, 255, levelCalculationWave(pos));
+          }
+        }
+        else if(i * setSize + ii - 1 >= 35 && i * setSize + ii - 1 < 89){
+          leds[i * setSize + ii - 1] = CHSV(0, 255, levelCalculationWave(pos));
+        }
+        else if(i * setSize + ii - 1 >= 89 ){
+          leds[i * setSize + ii - 1] = CHSV(0, 0, levelCalculationWave(pos));
+        }
+        
+      }
+    }
+  }
+  leds[0] = CRGB::Black;  
+}
 
 /**
  * Calculates actual value for LED from a defined function.
