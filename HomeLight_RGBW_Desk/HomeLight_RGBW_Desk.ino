@@ -202,7 +202,6 @@ void renderWave(float offset){
       }
     }
   }
-  leds[0] = CRGB::Black;  
 }
 
 /**
@@ -234,7 +233,6 @@ void renderWaveFlag(float offset){
       }
     }
   }
-  leds[0] = CRGB::Black;  
 }
 
 /**
