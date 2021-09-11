@@ -105,8 +105,8 @@ body{
 .slider::-webkit-slider-thumb {
   -webkit-appearance: none; /* Override default look */
   appearance: none;
-  width: 25px; /* Set a specific slider handle width */
-  height: 25px; /* Slider handle height */
+  width: 75px; /* Set a specific slider handle width */
+  height: 75px; /* Slider handle height */
   background: #fff; /* Green background */
   cursor: pointer; /* Cursor on hover */
   border-radius: 24px;
@@ -150,7 +150,9 @@ body{
 
 
 
-
+.hidden{
+    display: none;
+}
 
 
 /*
@@ -159,11 +161,11 @@ body{
 
 
 /* This is the collapse and expand routine for the side panels */
-.shown{
+.visibleControl{
   -webkit-animation: KEYshowControl 0.3s ease-in-out 0s 1 both;
           animation: KEYshowControl 0.3s ease-in-out 0s 1 both;
 }
-.hidden{
+.hiddenControl{
   -webkit-animation: KEYhideControl 0.3s ease-in-out 0s 1 both;
           animation: KEYhideControl 0.3s ease-in-out 0s 1 both;
 }
