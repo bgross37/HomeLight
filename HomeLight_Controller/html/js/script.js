@@ -92,6 +92,8 @@ Object.entries(DEVICES).forEach(([key, device]) => {
 
 function activateMainButton(){
     //TODO: make main switch available
+    document.getElementById('mainButtonContainer').classList.remove('hidden');
+    Console.log('Main Button shown')
 }
 
 function mainButtonClicked(){
@@ -279,10 +281,10 @@ function createHSVSliders(colorBox, callback, values, config){
     container.appendChild(contVal);
     container.appendChild(contWhite);
     
-    config[0]._active == "true" ? contHue.classList.add('shown') : contHue.classList.add('hidden');
-    config[1]._active == "true" ? contSat.classList.add('shown') : contSat.classList.add('hidden');
-    config[2]._active == "true" ? contVal.classList.add('shown') : contVal.classList.add('hidden');
-    config[3]._active == "true" ? contWhite.classList.add('shown') : contWhite.classList.add('hidden');
+    config[0]._active == "true" ? contHue.classList.add('visibleControl') : contHue.classList.add('hiddenControl');
+    config[1]._active == "true" ? contSat.classList.add('visibleControl') : contSat.classList.add('hiddenControl');
+    config[2]._active == "true" ? contVal.classList.add('visibleControl') : contVal.classList.add('hiddenControl');
+    config[3]._active == "true" ? contWhite.classList.add('visibleControl') : contWhite.classList.add('hiddenControl');
     
     return container;
 }
