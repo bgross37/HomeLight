@@ -9,50 +9,42 @@
 #include                              <ESP8266mDNS.h>
 #include                              <WebSocketsServer.h>
 #include                              "WifiCredentials.h"
-#include                              <FastLED.h>
-#include                              "FastLED_RGBW.h"
+#include                              <Adafruit_NeoPixel.h>
 
 
-#define DATA_PIN D3
+
+#define DATA_PIN D2
 #define NUM_LEDS 143
 
 
 
 WebSocketsServer webSocket(81);    // create a websocket server on port 81
-CRGBW leds[NUM_LEDS];
-CRGB *ledsRGB = (CRGB *) &leds[0];
+Adafruit_NeoPixel strip(NUM_LEDS, DATA_PIN, NEO_GRBW + NEO_KHZ800);
 
 const char* mdnsName = "desk"; // Domain name for the mDNS responder
 const int deviceType = 1;
 
-unsigned long lastReconnectMillis = 0;
-unsigned long lastFrameMillis = 0;
+unsigned long lastReconnectMillis = 0;unsigned long lastFrameMillis = 0;
 
 int maxFrames = 1500;
 const int setSize = 8;
 const int numberOfSets = NUM_LEDS / setSize;
 
 char currentMode = '#';
-
-CHSV currentColorHSV = CHSV(0,0,0);
-CRGBW tempRGBW = CRGBW(0,0,0,0);
-CRGB tempRGB = CRGB(0,0,0);
-int currentWhite = 0;
-
+uint8_t currentW = 0;
+uint16_t currentH = 0;
+uint8_t currentS = 0;
+uint8_t currentV = 0;
+uint32_t color = 0;
 
 void setup() {
   pinMode(D4, OUTPUT);
   digitalWrite(D4, HIGH);
   Serial.begin(115200);
 
-   //---- pixel config and initializing to black:
-  FastLED.addLeds<WS2812B, DATA_PIN, RGB>(ledsRGB, getRGBWsize(NUM_LEDS));
-  for(int i = 0; i < NUM_LEDS; i++){
-    leds[i] = CRGB::Black;
-  }
-  FastLED.setBrightness(255);
-  FastLED.show();
-
+  strip.begin();
+  strip.show(); // Initialize all pixels to 'off'
+  
   // WIFI Setup:
   WiFi.mode(WIFI_STA);
   WiFi.setSleepMode(WIFI_NONE_SLEEP);
@@ -83,32 +75,29 @@ void loop() {
   }
   webSocket.loop();
   MDNS.update();
-  
+
   if(currentMode == '#'){
-      tempRGB = CRGB(0,0,0);
-      hsv2rgb_rainbow(currentColorHSV, tempRGB);
-      tempRGBW = CRGBW(tempRGB.r, tempRGB.g, tempRGB.b, currentWhite);
-      for(int i = 0; i < NUM_LEDS; i++){
-        leds[i] = tempRGBW;
-      }
-  }
-  else if(currentMode == 'A'){
-  int frame = millis() % maxFrames;
-      float offset = (float)frame / (float)maxFrames;
-      //direction modifier (-1): offset * 1 OR offset * -1
-      renderWaveFlag(offset * -1);
-  }
-  else if(currentMode == 'B'){
+      strip.fill(color);
+        
+    }
+    else if(currentMode == 'A'){
     int frame = millis() % maxFrames;
-      float offset = (float)frame / (float)maxFrames;
-      //direction modifier (-1): offset * 1 OR offset * -1
-      renderWave(offset * -1);
-  }  
+        float offset = (float)frame / (float)maxFrames;
+        //direction modifier (-1): offset * 1 OR offset * -1
+        renderWaveFlag(offset * -1);
+    }
+    else if(currentMode == 'B'){
+      int frame = millis() % maxFrames;
+        float offset = (float)frame / (float)maxFrames;
+        //direction modifier (-1): offset * 1 OR offset * -1
+        renderWave(offset * -1);
+    }
 
   if(millis() - lastFrameMillis > 30){
     lastFrameMillis = millis();
-    FastLED.show();
+    strip.show();
   }
+
 }
 
 
@@ -134,49 +123,54 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t messag
       if (payload[0] == '#') {
         currentMode = '#';
         uint32_t hsv = (uint32_t) strtoul((const char *) &payload[1], NULL, 16);   // decode rgb data
-        int h = ((hsv >> 24) & 0xFF);
-        int s = ((hsv >> 16) & 0xFF);
-        int v = ((hsv >>  8) & 0xFF);
-        int w =          hsv & 0xFF;
-        currentColorHSV = CHSV(h, s, v);
-        currentWhite = w;
+        currentH = ((hsv >> 24) & 0xFF);
+        currentS = ((hsv >> 16) & 0xFF);
+        currentV = ((hsv >>  8) & 0xFF);
+        currentW =          hsv & 0xFF;
+        color = strip.ColorHSV(currentH * 255, currentS, currentV);
+        color = (currentW << 24) | color;
       } 
       
       else if (payload[0] == '$') {
         String response = "R";
         response += deviceType;
         response += String(currentMode);
-        if(currentColorHSV.hue < 0x0F){
+        if(currentH < 0x0F){
           response += "0";
         }
-        response += String(currentColorHSV.hue, HEX);
-        if(currentColorHSV.sat < 0x0F){
+        response += String(currentH, HEX);
+        if(currentS < 0x0F){
           response += "0";
         }
-        response += String(currentColorHSV.sat, HEX);
-        if(currentColorHSV.val < 0x0F){
+        response += String(currentS, HEX);
+        if(currentV < 0x0F){
           response += "0";
         }
-        response += String(currentColorHSV.val, HEX);
-        if(currentWhite < 0x0F){
+        response += String(currentV, HEX);
+        if(currentW < 0x0F){
           response += "0";
         }
-        response += String(currentWhite, HEX);
+        response += String(currentW, HEX);
         Serial.println(response);
         webSocket.sendTXT(num, response);
       } 
       
       else if (payload[0] == 'A') {
         currentMode = 'A';
+        uint32_t hsv = (uint32_t) strtoul((const char *) &payload[1], NULL, 16);   // decode rgb data
+        currentH = ((hsv >> 24) & 0xFF);
+        currentS = ((hsv >> 16) & 0xFF);
+        currentV = ((hsv >>  8) & 0xFF);
+        currentW =          hsv & 0xFF;
+        //color = 0x00111111 & color;
       }
 
       else if (payload[0] == 'B') {
         uint32_t hsv = (uint32_t) strtol((const char *) &payload[1], NULL, 16);   // decode rgb data
-        int h = ((hsv >> 24) & 0xFF);
-        int s = ((hsv >> 16) & 0xFF);
-        int v = ((hsv >>  8) & 0xFF);
-        int w =          hsv & 0xFF;
-        currentColorHSV = CHSV(h,s,v);
+        currentH = ((hsv >> 24) & 0xFF);
+        currentS = ((hsv >> 16) & 0xFF);
+        currentV = ((hsv >>  8) & 0xFF);
+        currentW =          hsv & 0xFF;
         currentMode = 'B';
       }
       
@@ -198,11 +192,14 @@ void renderWave(float offset){
       if(i * setSize + ii <= NUM_LEDS){
         float ledValueMod = ii + (setSize * offset);
         uint8_t pos = ledValueMod * (256 / setSize);
-        leds[i * setSize + ii - 1] = CHSV(currentColorHSV.hue, currentColorHSV.saturation, levelCalculationWave(pos));
+        int ledPos = i * setSize + ii - 1;
+        color = strip.ColorHSV((uint16_t)currentH * 255, currentS, levelCalculationWave(pos));
+        strip.setPixelColor(ledPos, color);
       }
     }
   }
 }
+
 
 /**
  * renders Wave LED strip. Iterates every set of LEDs, and LED per set.
@@ -214,26 +211,25 @@ void renderWaveFlag(float offset){
       if(i * setSize + ii <= NUM_LEDS){
         float ledValueMod = ii + (setSize * offset);
         uint8_t pos = ledValueMod * (256 / setSize);
+        int ledPos = i * setSize + ii - 1;
         
-        if(i * setSize + ii - 1 < 35){
-          if((i * setSize + ii - 1) % 3 == 0){
-            leds[i * setSize + ii - 1] = CHSV(160, 255, levelCalculationWave(pos));
-          }
-          else {
-            leds[i * setSize + ii - 1] = CHSV(160, 255, levelCalculationWave(pos));
-          }
+        if(ledPos < 35){
+          color = strip.ColorHSV(40800, 255, levelCalculationWave(pos));
+          strip.setPixelColor(ledPos, color);
         }
-        else if(i * setSize + ii - 1 >= 35 && i * setSize + ii - 1 < 89){
-          leds[i * setSize + ii - 1] = CHSV(0, 255, levelCalculationWave(pos));
+        else if(ledPos >= 35 && ledPos < 89){
+          color = strip.ColorHSV(0, 255, levelCalculationWave(pos));
+          strip.setPixelColor(ledPos, color);
         }
-        else if(i * setSize + ii - 1 >= 89 ){
-          leds[i * setSize + ii - 1] = CHSV(0, 0, levelCalculationWave(pos));
+        else if(ledPos >= 89 ){
+          color = strip.ColorHSV(0, 0, levelCalculationWave(pos));
+          strip.setPixelColor(ledPos, color);
         }
-        
       }
     }
   }
 }
+
 
 /**
  * Calculates actual value for LED from a defined function.
