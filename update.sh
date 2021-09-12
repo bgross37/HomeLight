@@ -1,2 +1,2 @@
-git --git-dir=~/git/HomeLight/ fetch --all
-git --git-dir=~/git/HomeLight/ reset --hard origin/main
+git -C ~/git/HomeLight/ fetch --all
+git -C ~/git/HomeLight/ reset --hard origin/main
