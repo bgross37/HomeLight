@@ -96,7 +96,14 @@ Object.entries(DEVICES).forEach(([key, device]) => {
 function activateMainButton(){
     //TODO: make main switch available
     document.getElementById('mainButtonContainer').classList.remove('hidden');
-    Console.log('Main Button shown')
+    Object.entries(DEVICES).forEach(([key, device]) => {
+        if(!device.isError){
+            if(device.state.values[3] > 128 || device.state.values[4] > 128){
+                document.getElementById("mainButton").checked = true;
+            }
+            return;
+        }
+    })
 }
 
 function mainButtonClicked(){
