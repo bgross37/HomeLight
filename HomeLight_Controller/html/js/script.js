@@ -72,6 +72,9 @@ Object.entries(DEVICES).forEach(([key, device]) => {
         }
         else{
             device.isError = false;
+            ws.addEventListener('close', function (event) {
+                window.location.reload(false);
+            });
         }
         let response = parseResponseString(event.data);
         device.deviceType = response.deviceType;
