@@ -7,15 +7,18 @@
         <div>
             <h1 id="title">HomeLight</h1>
         </div>
-        <div id='mainButtonContainer' class='hidden'>
-            <p class="buttonLabel">O</p>
-            <!-- Rounded switch -->
-                <label class="toggle-switch">
-                  <input type="checkbox" id='mainButton'>
-                  <span class="toggle-slider round"></span>
-                </label>
-            <p class="buttonLabel">I</p>
-        </div>
+        <fieldset id='mainButtonContainer' class='hidden'>
+            <div class="toggle" style="margin: auto;">
+                <input type="radio" name="toggle" value="0" id="toggleOff" onclick="mainButtonClicked(this)" checked="true"/>
+                <label for="toggleOff">OFF</label>
+                <input type="radio" name="toggle" value="2" id="toggle2per" onclick="mainButtonClicked(this)"/>
+                <label for="toggle2per">2%</label>
+                <input type="radio" name="toggle" value="50" id="toggle50per" onclick="mainButtonClicked(this)"/>
+                <label for="toggle50per">50%</label>
+                <input type="radio" name="toggle" value="255" id="toggleOn" onclick="mainButtonClicked(this)"/>
+                <label for="toggleOn">ON</label>
+            </div>
+        </fieldset>
         <div id='lightsContainer'></div>
         
         <script src="js/utility.js"></script>

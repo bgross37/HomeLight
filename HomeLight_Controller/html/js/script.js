@@ -40,7 +40,6 @@ const DEVICETYPES = readXML('DeviceTypes.xml').devicetypes.device
 let DEVICES = readXML('Devices.xml').devices.device;
 let errorcount = 0;
 
-let mainButton = document.getElementById('mainButton');
 
 //xml parser returns just an object of only one tag is found. Needs to be an array all the time.
 if(!Array.isArray(DEVICES)){
@@ -49,6 +48,7 @@ if(!Array.isArray(DEVICES)){
 
 //iterate over the objects in the list
 Object.entries(DEVICES).forEach(([key, device]) => {
+    device.isReady = false;
     let ws = new WebSocket("ws://" + device._mdns + ":81")
     ws.addEventListener('open', function (event) {
         ws.send('$'); //request current status
@@ -77,46 +77,63 @@ Object.entries(DEVICES).forEach(([key, device]) => {
             });
         }
         let response = parseResponseString(event.data);
-        device.deviceType = response.deviceType;
-        device.sliderConfig = DEVICETYPES[response.devicetype].mode.find(x => x._id === response.mode).control
-        device.state = new DeviceState(response.mode, response.values, ws);
-        
-        createControls(device);
-        
-        if(key == DEVICES.length - errorcount - 1){
-            activateMainButton();
+        if(!device.isReady){
+            device.deviceType = response.deviceType;
+            device.sliderConfig = DEVICETYPES[response.devicetype].mode.find(x => x._id === response.mode).control
+            device.state = new DeviceState(response.mode, response.values, ws);
+            
+            createControls(device);
+            
+            if(key == DEVICES.length - errorcount - 1){
+                activateMainButton();
+            }
+            device.isReady = true;
+        }
+        else{
+            device.sliderObjects[0].value = response.values[0];
+            device.sliderObjects[1].value = response.values[1];
+            device.sliderObjects[2].value = response.values[2];
+            device.sliderObjects[3].value = response.values[3];
         }
     });
-    
-    
 })
 
 
 
 function activateMainButton(){
-    //TODO: make main switch available
     document.getElementById('mainButtonContainer').classList.remove('hidden');
+    let highestValue = 0;
     Object.entries(DEVICES).forEach(([key, device]) => {
         if(!device.isError){
-            if(device.state.values[3] > 128 || device.state.values[4] > 128){
-                document.getElementById("mainButton").checked = true;
+            if(device.state.values[3] > highestValue){
+                highestValue = device.state.values[3];
             }
-            return;
+            if(device.state.values[4] > highestValue){
+                highestValue = device.state.values[4];
+            }
         }
     })
+    console.log(highestValue)
+    if(highestValue > 0 && highestValue <= 2){
+        document.getElementById('toggle2per').checked = true;
+    }
+    else if(highestValue > 2 && highestValue <= 128){
+        document.getElementById('toggle50per').checked = true;
+    }
+    else{
+        document.getElementById('toggleOn').checked = true;
+    }
 }
 
-function mainButtonClicked(){
-    let value = mainButton.checked == true ? 255 : 0;
+function mainButtonClicked(item){
+    value = item.value;
     Object.entries(DEVICES).forEach(([key, device]) => {
         if(!device.isError){
             device.state.receiveColors(device.state.values[0], device.state.values[1], value, value);
+            device.state.ws.send('$');
         }
     })
-    
-    //TODO: register sliders with device so they can be reset
 }
-mainButton.onclick = mainButtonClicked;
 
 
 //build the HTML. This is called after all devices have been created and received their statuses.
@@ -150,7 +167,7 @@ function buildHTML(device){
 }
 
 function createControls(device){
-    document.getElementById('controlContainer_' + device._mdns).appendChild(createHSVSliders(document.getElementById('colorBox_' + device._mdns), device.state.receiveColors.bind(device.state), device.state.values, device.sliderConfig));
+    document.getElementById('controlContainer_' + device._mdns).appendChild(createHSVSliders(document.getElementById('colorBox_' + device._mdns), device.state.receiveColors.bind(device.state), device.state.values, device.sliderConfig, device.sliderObjects = []));
 }
 
 //building an error header
@@ -205,11 +222,16 @@ function parseResponseString(response){
 /**
  * Builds HTML sliders
  */
-function createHSVSliders(colorBox, callback, values, config){
+function createHSVSliders(colorBox, callback, values, config, sliderObjects){
     let hue = document.createElement('input');
     let sat = document.createElement('input');
     let val = document.createElement('input');
     let white = document.createElement('input');
+    
+    sliderObjects.push(hue);
+    sliderObjects.push(sat);
+    sliderObjects.push(val);
+    sliderObjects.push(white);
     
     console.log(values)
 
