@@ -10,6 +10,7 @@
 #include                              <WebSocketsServer.h>
 #include                              "WifiCredentials.h"
 #include                              <Adafruit_NeoPixel.h>
+#include                              <SoftValue.h>
 
 
 
@@ -20,6 +21,12 @@
 
 WebSocketsServer webSocket(81);    // create a websocket server on port 81
 Adafruit_NeoPixel strip(NUM_LEDS, DATA_PIN, NEO_GRBW + NEO_KHZ800);
+SoftValue softH(500);
+SoftValue softS(500);
+SoftValue softV(500);
+SoftValue softW(500);
+
+uint32_t color = 0;
 
 const char* mdnsName = "desk"; // Domain name for the mDNS responder
 const int deviceType = 1;
@@ -31,11 +38,7 @@ const int setSize = 8;
 const int numberOfSets = NUM_LEDS / setSize;
 
 char currentMode = '#';
-uint8_t currentW = 0;
-uint16_t currentH = 0;
-uint8_t currentS = 0;
-uint8_t currentV = 0;
-uint32_t color = 0;
+
 
 void setup() {
   pinMode(D4, OUTPUT);
@@ -76,9 +79,17 @@ void loop() {
   webSocket.loop();
   MDNS.update();
 
+  softH.loop();
+  softS.loop();
+  softV.loop();
+  softW.loop();
+
   if(currentMode == '#'){
+      color = strip.ColorHSV(softH.getCurrentValue() * 255, softS.getCurrentValue(), softV.getCurrentValue());
+      color = (softW.getCurrentValue() << 24) | color;
+
+      
       strip.fill(color);
-        
     }
     else if(currentMode == 'A'){
     int frame = millis() % maxFrames;
@@ -123,34 +134,32 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t messag
       if (payload[0] == '#') {
         currentMode = '#';
         uint32_t hsv = (uint32_t) strtoul((const char *) &payload[1], NULL, 16);   // decode rgb data
-        currentH = ((hsv >> 24) & 0xFF);
-        currentS = ((hsv >> 16) & 0xFF);
-        currentV = ((hsv >>  8) & 0xFF);
-        currentW =          hsv & 0xFF;
-        color = strip.ColorHSV(currentH * 255, currentS, currentV);
-        color = (currentW << 24) | color;
+        softH.setValue(((hsv >> 24) & 0xFF));
+        softS.setValue(((hsv >> 16) & 0xFF));
+        softV.setValue(((hsv >>  8) & 0xFF));
+        softW.setValue(         hsv & 0xFF);
       } 
       
       else if (payload[0] == '$') {
         String response = "R";
         response += deviceType;
         response += String(currentMode);
-        if(currentH < 0x0F){
+        if(softH.getTargetValue() < 0x0F){
           response += "0";
         }
-        response += String(currentH, HEX);
-        if(currentS < 0x0F){
+        response += String(softH.getTargetValue(), HEX);
+        if(softS.getTargetValue() < 0x0F){
           response += "0";
         }
-        response += String(currentS, HEX);
-        if(currentV < 0x0F){
+        response += String(softH.getTargetValue(), HEX);
+        if(softV.getTargetValue() < 0x0F){
           response += "0";
         }
-        response += String(currentV, HEX);
-        if(currentW < 0x0F){
+        response += String(softV.getTargetValue(), HEX);
+        if(softW.getTargetValue() < 0x0F){
           response += "0";
         }
-        response += String(currentW, HEX);
+        response += String(softW.getTargetValue(), HEX);
         Serial.println(response);
         webSocket.sendTXT(num, response);
       } 
@@ -158,19 +167,18 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t messag
       else if (payload[0] == 'A') {
         currentMode = 'A';
         uint32_t hsv = (uint32_t) strtoul((const char *) &payload[1], NULL, 16);   // decode rgb data
-        currentH = ((hsv >> 24) & 0xFF);
-        currentS = ((hsv >> 16) & 0xFF);
-        currentV = ((hsv >>  8) & 0xFF);
-        currentW =          hsv & 0xFF;
-        //color = 0x00111111 & color;
+        softH.setValue(((hsv >> 24) & 0xFF));
+        softS.setValue(((hsv >> 16) & 0xFF));
+        softV.setValue(((hsv >>  8) & 0xFF));
+        softW.setValue(         hsv & 0xFF);
       }
 
       else if (payload[0] == 'B') {
         uint32_t hsv = (uint32_t) strtol((const char *) &payload[1], NULL, 16);   // decode rgb data
-        currentH = ((hsv >> 24) & 0xFF);
-        currentS = ((hsv >> 16) & 0xFF);
-        currentV = ((hsv >>  8) & 0xFF);
-        currentW =          hsv & 0xFF;
+        softH.setValue(((hsv >> 24) & 0xFF));
+        softS.setValue(((hsv >> 16) & 0xFF));
+        softV.setValue(((hsv >>  8) & 0xFF));
+        softW.setValue(         hsv & 0xFF);
         currentMode = 'B';
       }
       
@@ -193,7 +201,7 @@ void renderWave(float offset){
         float ledValueMod = ii + (setSize * offset);
         uint8_t pos = ledValueMod * (256 / setSize);
         int ledPos = i * setSize + ii - 1;
-        color = strip.ColorHSV((uint16_t)currentH * 255, currentS, levelCalculationWave(pos));
+        color = strip.ColorHSV((uint16_t)softH.getCurrentValue() * 255, softS.getCurrentValue(), levelCalculationWave(pos));
         strip.setPixelColor(ledPos, color);
       }
     }
