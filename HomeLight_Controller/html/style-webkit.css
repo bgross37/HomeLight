@@ -333,7 +333,7 @@ body:not(:-moz-handler-blocked) fieldset {
   /* ----- */
 }
 
-.toggle input:checked + label {
+/*.toggle input:checked + label {
   background-color: #4B9DEA;
   color: #FFF;
   box-shadow: 0 0 10px rgba(102, 179, 251, 0.5);
@@ -342,7 +342,7 @@ body:not(:-moz-handler-blocked) fieldset {
 .toggle input:focus + label {
   outline: dotted 1px #CCC;
   outline-offset: 0.45rem;
-}
+}*/
 @media (max-width: 800px) {
   .toggle input + label {
     padding: 0.75rem 0.25rem;

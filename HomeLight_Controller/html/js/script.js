@@ -102,27 +102,6 @@ Object.entries(DEVICES).forEach(([key, device]) => {
 
 function activateMainButton(){
     document.getElementById('mainButtonContainer').classList.remove('hidden');
-    let highestValue = 0;
-    Object.entries(DEVICES).forEach(([key, device]) => {
-        if(!device.isError){
-            if(device.state.values[3] > highestValue){
-                highestValue = device.state.values[3];
-            }
-            if(device.state.values[4] > highestValue){
-                highestValue = device.state.values[4];
-            }
-        }
-    })
-    console.log(highestValue)
-    if(highestValue > 0 && highestValue <= 2){
-        document.getElementById('toggle2per').checked = true;
-    }
-    else if(highestValue > 2 && highestValue <= 128){
-        document.getElementById('toggle50per').checked = true;
-    }
-    else{
-        document.getElementById('toggleOn').checked = true;
-    }
 }
 
 function mainButtonClicked(item){
