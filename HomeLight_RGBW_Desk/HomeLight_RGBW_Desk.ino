@@ -151,7 +151,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t messag
         if(softS.getTargetValue() < 0x0F){
           response += "0";
         }
-        response += String(softH.getTargetValue(), HEX);
+        response += String(softS.getTargetValue(), HEX);
         if(softV.getTargetValue() < 0x0F){
           response += "0";
         }
